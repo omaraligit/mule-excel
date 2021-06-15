@@ -26,19 +26,25 @@ public class HelperClass {
 		String excelFilePathI = path + "Exemple-n.xls";
 		String excelFilePathO = path + randID + ".xls";
         
-		List<Ligne> employees = new ArrayList<Ligne>();
-		employees.add(new Ligne("rr", "12" ,"12", "12", "12"));
-		employees.add(new Ligne("rer", "12" ,"12", "12", "12"));
-		employees.add(new Ligne("rre", "12" ,"12", "12", "12"));
-		employees.add(new Ligne("err", "12" ,"12", "12", "12"));
-		employees.add(new Ligne("zrr", "12" ,"12", "12", "12"));
-		employees.add(new Ligne("rzr", "12" ,"12", "12", "12"));
-		employees.add(new Ligne("rrz", "12" ,"12", "12", "12"));
+		List<Ligne> xlsLignes = new ArrayList<Ligne>();
+		for (int i = 0; i < lignes.size(); i++) {
+			HashMap<String, String> oneLine  = (HashMap<String, String>) lignes.get(i);
+			xlsLignes.add(new Ligne(
+					oneLine.get("description"),
+					oneLine.get("unite"),
+					oneLine.get("qte"),
+					oneLine.get("Punit"),
+					oneLine.get("tva")
+			));
+			
+		}
 
 		FileInputStream fileInputStream   = new FileInputStream(new File(excelFilePathI));
 		FileOutputStream fileOutputStream = new FileOutputStream(excelFilePathO);
 	    Context context = new Context();
-	    context.putVar("employees", employees);
+	    context.putVar("lines", xlsLignes);
+	    context.putVar("devis", devis);
+	    context.putVar("client", client);
 	    JxlsHelper.getInstance().processTemplate(fileInputStream, fileOutputStream, context);
 	        
 	    
