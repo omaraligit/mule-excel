@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:java="http://www.mulesoft.org/schema/mule/java" xmlns:file="http://www.mulesoft.org/schema/mule/file"
+	xmlns:validation="http://www.mulesoft.org/schema/mule/validation"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/validation http://www.mulesoft.org/schema/mule/validation/current/mule-validation.xsd
+http://www.mulesoft.org/schema/mule/file http://www.mulesoft.org/schema/mule/file/current/mule-file.xsd
+http://www.mulesoft.org/schema/mule/java http://www.mulesoft.org/schema/mule/java/current/mule-java.xsd">
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="4ed4961f-8292-4b84-9131-c17b2e07edee" >
+		<http:listener-connection host="0.0.0.0" port="8088" />
+	</http:listener-config>
+	<validation:config name="Validation_Config" doc:name="Validation Config" doc:id="57a88c7d-b287-43ff-8d78-a7d334262ff8" />
+	<file:config name="File_Config" doc:name="File Config" doc:id="77fc87bb-391d-4b61-ac56-ad2d3bca06bc" >
+		<file:connection workingDir="C:\Users\oaitbenali\Documents\studio-workspace\excel-rest-devis\src\main\resources" />
+	</file:config>
+	
+	<flow name="excel-rest-devisFlow" doc:id="b0c02149-901b-4ca9-b354-a9984a7b5095" >
+		<http:listener doc:name="Listener" doc:id="af4c5b26-a965-42a2-b183-84976fb39197" config-ref="HTTP_Listener_config" path="/" allowedMethods="POST">
+			<http:response >
+				<http:headers ><![CDATA[#[output application/java
+---
+{
+	"Content-Disposition" : "attachmentt; filename=$((vars.randID default "")).xlsx"
+}]]]></http:headers>
+			</http:response>
+			<http:error-response statusCode="#[vars.resCode default 500]" >
+				<http:body ><![CDATA[#[output application/json
+---
+if(isEmpty(error.errors))
+{"message":error.description}
+else
+error.errors map ((item, index) -> {
+    message:item.description
+})]]]></http:body>
+			</http:error-response>
+		</http:listener>
+		<logger level="INFO" doc:name="Logger" doc:id="6479440b-485e-4a17-aff2-2fbde0b564b2" message='#[output text/plain&#10;---&#10;"\n****************************************************\n" ++&#10;"---- - file generation started - ----" ++&#10;"\n****************************************************\n"]'/>
+		<flow-ref doc:name="Flow Reference" doc:id="d254374f-71cd-4041-939f-563ad1acf71e" name="excel-rest-devis-validator"/>
+		<flow-ref doc:name="Flow Reference" doc:id="739a7dbe-c0fd-44d0-99d4-fa07cfaed965" name="excel-rest-devis-lignes-validator" />
+		<logger level="INFO" doc:name="Copy_of_Logger" doc:id="384a4934-b5c9-4817-9599-4115aa467d3a" message='#[output text/plain&#10;---&#10;"\n****************************************************\n" ++&#10;"---- - validation completed - ----" ++&#10;"\n****************************************************\n"]' />
+		<set-variable value="#[uuid()]" doc:name="Set Variable" doc:id="2d92b9c6-d504-4dc8-b660-3580f13cf7ed" variableName="randID"/>
+		<logger level="INFO" doc:name="Logger" doc:id="f4df4e72-8da8-40dc-82ef-5861b412600f" message='#[output text/plain&#10;---&#10;"\n****************************************************\n" ++&#10;"---- - invoking java code - ----" ++&#10;"\n****************************************************\n"]'/>
+		<ee:transform doc:name="invoking the JAVA code" doc:id="cba139be-5a03-48df-a0c3-10b26807247d">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+import java!com::helpers::HelperClass
+output application/json
+var randID = vars.randID
+---
+{
+	file:HelperClass::roll(payload.lignes,payload.client,payload.devis, randID)
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="Logger" doc:id="0d273201-d547-4bf2-b0ae-1ee25362d79a" message='#[output text/plain&#10;---&#10;"\n****************************************************\n" ++&#10;"---- - java code finished, returning static file - ----" ++&#10;"\n****************************************************\n"]'/>
+		<http:load-static-resource doc:name="Sending back generated xlsx" doc:id="81266374-6f9b-4dcb-9d62-435ae937671b" resourceBasePath='#["C:\\Users\\oaitbenali\\Documents\\studio-workspace\\excel-rest-devis\\src\\main\\resources\\$((vars.randID default "")).xlsx"]' defaultFile="Exemple-n.xlsx" />
+		<error-handler>
+			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="ae86dbbb-dd6f-4cd6-a924-e11822c84fed" type="VALIDATION:EMPTY_COLLECTION, VALIDATION:INVALID_NUMBER, VALIDATION:INVALID_SIZE, VALIDATION:INVALID_TIME, VALIDATION:MULTIPLE">
+				<set-variable value="400" doc:name="Set Variable" doc:id="c0f61f44-08d0-4047-9798-8c9219eff7c1" variableName="resCode" />
+			</on-error-propagate>
+			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="706f0169-bd76-4b81-bfcf-bfa846fa2358" type="ANY"/>
+		</error-handler>
+	</flow>
+	<flow name="excel-rest-devisFlow1" doc:id="52ba34dc-a096-4d37-91bb-99d8199090ca" >
+		<http:listener doc:name="Listener" doc:id="ea4858fc-e30d-41e3-8f76-0107dd5c4e5b" config-ref="HTTP_Listener_config" path="/get">
+			<http:response >
+				<http:headers ><![CDATA[#[output application/java
+---
+{
+	"Content-Disposition" : "attachmentt; filename=tee.xlsx"
+}]]]></http:headers>
+			</http:response>
+		</http:listener>
+		<logger level="INFO" doc:name="Logger" doc:id="c4c05555-ac29-48f6-9ffb-5147cc1b8143" message="#[attributes]"/>
+	</flow>
+	<flow name="excel-rest-devis-lignes-validator" doc:id="99e5edec-c820-4cdc-87ed-0a9227c3f952">
+		<foreach doc:name="For Each" doc:id="c5e6587c-8198-43e9-8d46-1fed8350020b" collection="#[payload.lignes]">
+			<validation:all doc:name="All" doc:id="2b608b45-ce1a-47f8-97d9-cc244c2ad161">
+				<validation:is-number numberType="INTEGER" doc:name="Is number" doc:id="8a794929-a070-4f5d-bdf4-e01f1b05caae" value="#[payload.unite]" />
+				<validation:is-number numberType="INTEGER" doc:name="Is number" doc:id="d8ba5877-74e3-4261-a48f-d6ac07f655f5" value="#[payload.qte]"/>
+				<validation:is-number numberType="INTEGER" doc:name="Is number" doc:id="04bb2b1d-6c2e-42c7-9af6-14d764a58e87" value="#[payload.Punit]"/>
+				<validation:is-number numberType="INTEGER" doc:name="Is number" doc:id="cf3c014d-5dd2-450a-97b6-0be647e36185" value="#[payload.tva]" minValue="0" maxValue="100"/>
+				<validation:validate-size doc:name="Validate size" doc:id="e3df64a9-d217-4068-9c47-6837eec14c82" value="#[payload.description]" max="20"/>
+			</validation:all>
+		</foreach>
+	</flow>
+	<flow name="excel-rest-devis-validator" doc:id="c946d125-d642-4ec8-9f51-46acdac5b830" >
+		<validation:all doc:name="All" doc:id="04367a2c-5690-431d-ab92-ff2c8d36ccb8" >
+			<validation:is-number doc:name="Is number" doc:id="f26bcba7-457a-4ac9-8677-98c534ae9312" config-ref="Validation_Config" value="#[payload.client.numero]" numberType="INTEGER" message='#["client.numero : "++ payload.client.numero ++ " is not a valid number"]'/>
+			<validation:is-number doc:name="Is number" doc:id="50203f9a-6261-441f-a8a9-fd49b0bbefc2" config-ref="Validation_Config" value="#[payload.devis.numero]" numberType="INTEGER" message='#["devis.numero : "++ payload.devis.numero ++ " is not a valid number"]'/>
+			<validation:is-time doc:name="Is time" doc:id="b939c9aa-0187-4fde-807d-02697f6ce615" config-ref="Validation_Config" time="#[payload.devis.date]" pattern="yyyy-MM-dd"/>
+			<validation:is-not-empty-collection doc:name="Is not empty collection" doc:id="a495ed3c-f367-4fb2-b9b1-99e07ec568f0" values="#[payload.lignes]" message="lignes : au moins une ligne est requise"/>
+		</validation:all>
+	</flow>
+</mule>
