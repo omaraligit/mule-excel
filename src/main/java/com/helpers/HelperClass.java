@@ -3,6 +3,7 @@ package com.helpers;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -22,20 +23,31 @@ public class HelperClass {
 	
 	public static String roll(ArrayList lignes,HashMap<String, String> client, HashMap<String, String> devis,String randID) throws Exception {
 		
-		String path          = "C:\\Users\\oaitbenali\\Documents\\studio-workspace\\excel-rest-devis\\src\\main\\resources\\";
+		String path           = "C:\\Users\\oaitbenali\\Documents\\studio-workspace\\excel-rest-devis\\src\\main\\resources\\";
+		logit(path.toString());
 		String excelFilePathI = path + "Exemple-n.xls";
 		String excelFilePathO = path + randID + ".xls";
-        
+
+	    int totalHT = 0;
+	    
 		List<Ligne> xlsLignes = new ArrayList<Ligne>();
 		for (int i = 0; i < lignes.size(); i++) {
+			@SuppressWarnings("unchecked")
 			HashMap<String, String> oneLine  = (HashMap<String, String>) lignes.get(i);
 			xlsLignes.add(new Ligne(
-					oneLine.get("description"),
-					oneLine.get("unite"),
-					oneLine.get("qte"),
-					oneLine.get("Punit"),
-					oneLine.get("tva")
+					String.valueOf(oneLine.get("description")),
+					String.valueOf(oneLine.get("unite")),
+					String.valueOf(oneLine.get("qte")),
+					String.valueOf(oneLine.get("Punit")),
+					String.valueOf(oneLine.get("tva"))
 			));
+
+
+		    totalHT = 
+		    		Integer.valueOf(String.valueOf(oneLine.get("unite"))) * 
+		    		Integer.valueOf(String.valueOf(oneLine.get("qte"))) * 
+		    		Integer.valueOf(String.valueOf(oneLine.get("Punit")));
+			
 			
 		}
 
@@ -45,6 +57,8 @@ public class HelperClass {
 	    context.putVar("lines", xlsLignes);
 	    context.putVar("devis", devis);
 	    context.putVar("client", client);
+		context.putVar("totalHT", totalHT);
+	    
 	    JxlsHelper.getInstance().processTemplate(fileInputStream, fileOutputStream, context);
 	        
 	    
