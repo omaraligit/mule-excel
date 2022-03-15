@@ -42,13 +42,10 @@ public class HelperClass {
 					String.valueOf(oneLine.get("tva"))
 			));
 
-
 		    totalHT = 
 		    		Integer.valueOf(String.valueOf(oneLine.get("unite"))) * 
 		    		Integer.valueOf(String.valueOf(oneLine.get("qte"))) * 
 		    		Integer.valueOf(String.valueOf(oneLine.get("Punit")));
-			
-			
 		}
 
 		FileInputStream fileInputStream   = new FileInputStream(new File(excelFilePathI));

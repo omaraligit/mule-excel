@@ -9,13 +9,14 @@ http://www.mulesoft.org/schema/mule/validation http://www.mulesoft.org/schema/mu
 http://www.mulesoft.org/schema/mule/file http://www.mulesoft.org/schema/mule/file/current/mule-file.xsd
 http://www.mulesoft.org/schema/mule/java http://www.mulesoft.org/schema/mule/java/current/mule-java.xsd">
 	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="4ed4961f-8292-4b84-9131-c17b2e07edee" >
-		<http:listener-connection host="0.0.0.0" port="8088" />
+		<http:listener-connection host="0.0.0.0" port="${http.port}" />
 	</http:listener-config>
 	<validation:config name="Validation_Config" doc:name="Validation Config" doc:id="57a88c7d-b287-43ff-8d78-a7d334262ff8" />
 	<file:config name="File_Config" doc:name="File Config" doc:id="77fc87bb-391d-4b61-ac56-ad2d3bca06bc" >
 		<file:connection workingDir="C:\Users\oaitbenali\Documents\studio-workspace\excel-rest-devis\src\main\resources" />
 	</file:config>
 	
+	<configuration-properties doc:name="Configuration properties" doc:id="f5fc0672-221f-4db8-ade3-0d1a9394da24" file="config.yaml" />
 	<sub-flow name="sub-flow-validation" doc:id="8232f1e9-f000-4b72-9887-34d0dee05cbf" >
 		<logger level="INFO" doc:name="Logger" doc:id="6479440b-485e-4a17-aff2-2fbde0b564b2" message='#[output text/plain&#10;---&#10;"\n****************************************************\n" ++&#10;"---- - file generation started - ----" ++&#10;"\n****************************************************\n"]' />
 		<flow-ref doc:name="Flow Reference" doc:id="d254374f-71cd-4041-939f-563ad1acf71e" name="excel-rest-devis-validator" />
